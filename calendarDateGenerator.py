@@ -4,6 +4,7 @@ import uuid
 import os
 from pathlib import Path
 import argparse
+import logging
 
 WEEKDAY_NUMBER = 5
 WEEKDAYS_BETWEEN_PICKUPS = 10
@@ -13,13 +14,14 @@ FILE_NAME_PREFIX = "oakbay_garbage_file_schedule_"
 FILE_NAME_SUFFIX = ".ics"
 
 
-def add_event_to_calendar(garbage_calendar: list, event_date: date, description: str) -> list:
+def add_event_to_calendar(garbage_calendar: list, event_date: date, description: str, route: str) -> list:
     garbage_calendar.append("BEGIN:VEVENT")
-    garbage_calendar.append("DESCRIPTION:" + description) # cannot be set with spaces (requires quotes)
+    garbage_calendar.append("DESCRIPTION:" + description)
     garbage_calendar.append("DTSTART;VALUE=DATE:" + event_date.strftime("%Y%m%d"))
-    garbage_calendar.append("SUMMARY:" + description) # cannot be set with spaces (requires quotes)
+    garbage_calendar.append("SUMMARY:" + description)
     garbage_calendar.append("UID:" + str(uuid.uuid4()))
     garbage_calendar.append("END:VEVENT")
+    logging.warning(route + " " + event_date.strftime("%B-%d"))
     return garbage_calendar
 
 
@@ -42,7 +44,7 @@ def calendar_end(garbage_calendar: list) -> list:
 
 def print_calendar(garbage_calendar: list, route: str):
     file_name = FILE_NAME_PREFIX + route + FILE_NAME_SUFFIX
-    directory = str(Path(__file__).parent) + "/"
+    directory = str(Path(__file__).parent) + "/Schedules/"
     print("ics file will be generated at ", directory)
     f = open(os.path.join(directory, file_name), 'wb')
     f.write(bytes('\n'.join(garbage_calendar), "utf-8"))
@@ -65,7 +67,7 @@ def main():
 
     end_date = date(current_date.year, 12, 31)
 
-    calendar = add_event_to_calendar(calendar, current_date, args.description)
+    calendar = add_event_to_calendar(calendar, current_date, args.description, args.route)
 
     while current_date < end_date:
 
@@ -77,7 +79,7 @@ def main():
 
         if days_since_last_pickup >= WEEKDAYS_BETWEEN_PICKUPS:
             days_since_last_pickup = 0
-            calendar = add_event_to_calendar(calendar, current_date, args.description)
+            calendar = add_event_to_calendar(calendar, current_date, args.description, args.route)
 
     calendar = calendar_end(calendar)
     print_calendar(calendar, args.route)
