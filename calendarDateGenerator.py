@@ -42,8 +42,8 @@ def calendar_end(garbage_calendar: list) -> list:
     return garbage_calendar
 
 
-def print_calendar(garbage_calendar: list, route: str):
-    file_name = FILE_NAME_PREFIX + route + FILE_NAME_SUFFIX
+def print_calendar(garbage_calendar: list, route: str, prefix: str):
+    file_name = prefix + route + FILE_NAME_SUFFIX
     directory = str(Path(__file__).parent) + "/Schedules/"
     print("ics file will be generated at ", directory)
     f = open(os.path.join(directory, file_name), 'wb')
@@ -56,6 +56,8 @@ def main():
     parser.add_argument('-s', '--startdate', required=True, help='first pickup date for this route - YYYYMMDD')
     parser.add_argument('-r', '--route', required=True, help='route description ex. 1n')
     parser.add_argument('-d', '--description', required=True, help='event description')
+    parser.add_argument('-p', '--prefix', required=True, help='file name prefix')
+    parser.add_argument('-w', '--weekdays', required=False, help='weekdays between events Default: 10', default=10)
     args = parser.parse_args()
 
     calendar = []
@@ -77,12 +79,12 @@ def main():
             # only increment when it's a weekday and NOT a holiday
             days_since_last_pickup += 1
 
-        if days_since_last_pickup >= WEEKDAYS_BETWEEN_PICKUPS:
+        if days_since_last_pickup >= args.weekdays:
             days_since_last_pickup = 0
             calendar = add_event_to_calendar(calendar, current_date, args.description, args.route)
 
     calendar = calendar_end(calendar)
-    print_calendar(calendar, args.route)
+    print_calendar(calendar, args.route, args.prefix)
 
 
 if __name__ == "__main__":
